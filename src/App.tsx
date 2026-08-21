@@ -26,7 +26,7 @@ export function App() {
     error,
     minDate,
     maxDate,
-  } = useGlucoseData('/t1d_90day_blood_sugar_hba1c_7.csv');
+  } = useGlucoseData();
 
   // Game Mode & Simulation State
   const [isGameMode, setIsGameMode] = useState<boolean>(false);

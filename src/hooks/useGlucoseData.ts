@@ -1,40 +1,29 @@
 import { useState, useEffect, useMemo } from 'react';
 import { CGMDataPoint, GlycemicMetrics, AGPHourBin, TimeframeDays } from '../types/cgm';
-import { loadAndParseCGMCSV } from '../utils/csvParser';
+import { parseCGMCSVString } from '../utils/csvParser';
+import { RAW_CGM_CSV } from '../data/cgmDataset';
 import { calculateGlycemicMetrics, getEmptyMetrics } from '../utils/metricsCalculator';
 import { calculateAGPBins } from '../utils/agpCalculator';
 import { subDays } from 'date-fns';
 
-export function useGlucoseData(csvUrl: string = '/t1d_90day_blood_sugar_hba1c_7.csv') {
+export function useGlucoseData() {
   const [allData, setAllData] = useState<CGMDataPoint[]>([]);
   const [timeframe, setTimeframe] = useState<TimeframeDays>(90);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true);
-    setError(null);
-
-    loadAndParseCGMCSV(csvUrl)
-      .then((data) => {
-        if (isMounted) {
-          setAllData(data);
-          setIsLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          console.error('Failed to load CGM data:', err);
-          setError(err.message || 'Error loading CSV dataset');
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [csvUrl]);
+    try {
+      // Parse bundled in-memory dataset synchronously
+      const parsedData = parseCGMCSVString(RAW_CGM_CSV);
+      setAllData(parsedData);
+      setIsLoading(false);
+    } catch (err: any) {
+      console.error('Failed to parse in-memory CGM dataset:', err);
+      setError(err.message || 'Error loading dataset');
+      setIsLoading(false);
+    }
+  }, []);
 
   const { minDate, maxDate } = useMemo(() => {
     if (allData.length === 0) return { minDate: null, maxDate: null };
